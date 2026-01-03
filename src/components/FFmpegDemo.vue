@@ -505,7 +505,10 @@ export default defineComponent({
         await ffmpeg.load({
           coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
           wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-          workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript')
+          workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
+          // Disable SharedArrayBuffer requirement for Cloudflare compatibility
+          // @ts-ignore
+          s0: { wasm: true }
         })
         ffmpegLoaded.value = true
         progress.value = 20
