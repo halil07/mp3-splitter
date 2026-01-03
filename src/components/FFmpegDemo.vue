@@ -239,7 +239,7 @@ interface SegmentPreview {
   end: number
 }
 
-const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm' // Single-threaded version for Cloudflare compatibility
+const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm'
 
 export default defineComponent({
   name: 'MP3Splitter',
@@ -503,6 +503,7 @@ export default defineComponent({
 
       try {
         await ffmpeg.load({
+          workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
           coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
           wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
         })
