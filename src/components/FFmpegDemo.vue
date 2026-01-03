@@ -239,7 +239,7 @@ interface SegmentPreview {
   end: number
 }
 
-const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm'
+const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm'
 
 export default defineComponent({
   name: 'MP3Splitter',
