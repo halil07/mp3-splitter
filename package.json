@@ -12,6 +12,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@ffmpeg/core-mt": "0.12.10",
     "@ffmpeg/ffmpeg": "*",
     "@ffmpeg/util": "*",
     "vue": "^3.4.18"
