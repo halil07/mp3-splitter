@@ -49,6 +49,29 @@
       <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
     </div>
 
+    <!-- Split Points Input Section -->
+    <div v-if="uploadedFile" class="split-points-input-section">
+      <h3>Split Points (in minutes or mm:ss)</h3>
+      <p class="help-text">Enter each split point on a new line (e.g., 5.5 or 5:30 for 5 minutes 30 seconds)</p>
+      <textarea
+        ref="splitPointsTextarea"
+        v-model="splitPointsText"
+        class="split-points-textarea"
+        placeholder="1.5&#10;3.0&#10;5.25"
+        rows="6"
+        @input="parseSplitPoints"
+      ></textarea>
+      <div class="parsed-points">
+        <span class="parsed-label">Parsed split points:</span>
+        <div v-if="sortedSplitPoints.length > 0" class="parsed-points-list">
+          <span v-for="(point, index) in sortedSplitPoints" :key="index" class="parsed-point">
+            {{ formatTime(point) }}
+          </span>
+        </div>
+        <span v-else class="no-points">No points defined</span>
+      </div>
+    </div>
+
     <!-- Split Points Section (MP3 Player Style) -->
     <div v-if="uploadedFile" class="split-points-section">
       <h3>Split Points</h3>
@@ -263,6 +286,7 @@ export default defineComponent({
     const isPlayingSegment = ref<number | null>(null)
     const draggingMarkerIndex = ref<number | null>(null)
     const progressBar = ref<HTMLElement | null>(null)
+    const splitPointsText = ref('')
 
     const sortedSplitPoints = computed(() => {
       return [...splitPoints.value].sort((a, b) => a - b)
@@ -425,6 +449,47 @@ export default defineComponent({
         const audio = new Audio(segment.url)
         audio.play()
       }
+    }
+
+    // Parse split points from textarea (in minutes or mm:ss format)
+    function parseSplitPoints() {
+      const lines = splitPointsText.value.split('\n')
+      const points: number[] = []
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (trimmed === '') continue
+
+        let seconds = 0
+
+        // Check for mm:ss format
+        if (trimmed.includes(':')) {
+          const parts = trimmed.split(':')
+          if (parts.length === 2) {
+            const mins = parseInt(parts[0], 10)
+            const secs = parseInt(parts[1], 10)
+            if (!isNaN(mins) && !isNaN(secs) && mins >= 0 && secs >= 0 && secs < 60) {
+              seconds = mins * 60 + secs
+            }
+          }
+        } else {
+          // Decimal format (e.g., 5.5 = 5 minutes 30 seconds)
+          const minutes = parseFloat(trimmed)
+          if (!isNaN(minutes) && minutes >= 0) {
+            seconds = minutes * 60
+          }
+        }
+
+        if (seconds > 0 && (!audioDuration.value || seconds < audioDuration.value)) {
+          points.push(seconds)
+        }
+      }
+
+      // Remove duplicates and sort
+      const uniquePoints = [...new Set(points)]
+      uniquePoints.sort((a, b) => a - b)
+
+      splitPoints.value = uniquePoints
     }
 
     // Split point management
@@ -634,6 +699,7 @@ export default defineComponent({
       isPlayingSegment,
       segmentsPreview,
       progressBar,
+      splitPointsText,
       triggerFileInput,
       handleFileSelect,
       handleDrop,
@@ -653,7 +719,8 @@ export default defineComponent({
       startDragMarker,
       splitMP3,
       downloadSegment,
-      downloadAllSegments
+      downloadAllSegments,
+      parseSplitPoints
     }
   }
 })
@@ -661,7 +728,7 @@ export default defineComponent({
 
 <style scoped>
 .mp3-splitter {
-  max-width: 900px;
+  width: 100%;
   margin: 0 auto;
   padding: 2rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -775,6 +842,82 @@ h1 {
   background: #fee2e2;
   color: #991b1b;
   border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+/* Split Points Input Section */
+.split-points-input-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.split-points-input-section h3 {
+  margin: 0 0 0.5rem 0;
+  color: #374151;
+  font-size: 1.125rem;
+}
+
+.help-text {
+  margin: 0 0 1rem 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.split-points-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  resize: vertical;
+  min-height: 120px;
+  transition: border-color 0.2s;
+}
+
+.split-points-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.parsed-points {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #e0f2fe;
+  border-radius: 8px;
+  border-left: 4px solid #3b82f6;
+}
+
+.parsed-label {
+  display: block;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.parsed-points-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.parsed-point {
+  padding: 0.4rem 0.8rem;
+  background: #3b82f6;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.no-points {
+  color: #64748b;
+  font-style: italic;
   font-size: 0.875rem;
 }
 
